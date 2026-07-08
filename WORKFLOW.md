@@ -1,67 +1,63 @@
 # Blog Workflow
 
-This folder is one thing with three roles:
+This repository keeps writing and publishing separate:
 
 ```text
-D:\blog = Obsidian vault = Astro blog project = Git repository
+D:\blog                  # Git repository and Astro project
+D:\blog\obsidian         # Obsidian vault
+D:\blog\src\content      # Astro publishing target generated at build time
 ```
 
-There is only one Git repository: `D:\blog\.git`.
+There is still only one Git repository: `D:\blog\.git`.
 
-Obsidian Git and blog deployment both use this same repository. There is no nested Git repository and no sync script.
-
-## First-time setup on this computer
+## First-time setup
 
 1. Open Obsidian.
 2. Choose "Open folder as vault".
 3. Select:
 
 ```text
-D:\blog
+D:\blog\obsidian
 ```
 
-4. Go to Obsidian settings and enable community plugins.
-5. Enable the `Obsidian Git` plugin.
+4. Enable community plugins.
+5. Enable `Obsidian Git`.
 
-The plugin files are installed locally. The repository only stores its configuration.
+The Obsidian Git config uses `basePath: ".."` so it operates on the parent Git repository at `D:\blog`.
 
-## Connect GitHub
+## Writing
 
-Create a new GitHub repository, then run these commands in `D:\blog`:
-
-```powershell
-git remote add origin <your-github-repo-url>
-git push -u origin main
-```
-
-After this, Obsidian Git can push future changes automatically.
-
-## Connect Cloudflare Pages
-
-In Cloudflare Pages:
-
-- Connect the same GitHub repository.
-- Build command: `npm run build`
-- Build output directory: `dist`
-- Node version: `22`
-
-Cloudflare does not need Obsidian. It only builds the GitHub repository.
-
-## Writing posts
-
-Create blog posts in:
+Write blog posts in:
 
 ```text
-src/content/blog
+obsidian\posts
 ```
 
-Use the Obsidian template:
+Use the template:
 
 ```text
-.obsidian/templates/blog-post.md
+obsidian\_templates\blog-post.md
 ```
 
-Every public post needs frontmatter like this:
+Personal notes go in:
+
+```text
+obsidian\notes
+```
+
+They are synced by Git, but they are not published because the publish script only reads `obsidian\posts`.
+
+Private notes that should not sync at all can go in:
+
+```text
+obsidian\private
+```
+
+That folder is ignored by Git.
+
+## Frontmatter
+
+Every publishable post should have:
 
 ```md
 ---
@@ -74,87 +70,95 @@ draft: false
 ---
 ```
 
-Keep `draft: true` while writing. Change it to `draft: false` when ready to publish.
+Use `draft: true` while writing. Drafts can sync to Git, but the site does not publish them.
 
 ## Images
 
-Put images in:
+Put source images in:
 
 ```text
-src/content/blog/assets
+obsidian\assets
 ```
 
-Use Markdown links:
+Use Markdown image links:
 
 ```md
-![Screenshot](assets/screenshot.png)
+![Screenshot](../assets/screenshot.png)
 ```
 
-Avoid Obsidian wiki-style embeds for blog images:
+The publish script copies source assets into:
+
+```text
+src\content\blog-zh\assets
+```
+
+It also converts simple Obsidian image embeds like this:
 
 ```md
 ![[screenshot.png]]
 ```
 
-Astro expects normal Markdown image links.
+into:
 
-## Daily flow
+```md
+![screenshot.png](assets/screenshot.png)
+```
 
-1. Open `D:\blog` in Obsidian.
-2. Write or edit posts under `src/content/blog`.
-3. Save changes.
-4. Obsidian Git will commit and push on its interval.
-5. GitHub receives the commit.
-6. Cloudflare Pages builds and deploys the blog.
+## Publishing
 
-Before switching devices, make sure Obsidian Git has pushed the latest changes.
-
-When opening another device, let Obsidian Git pull first before editing.
-
-## New device setup
-
-1. Install Git.
-2. Install Obsidian.
-3. Clone the GitHub repository:
+Generate Astro content from Obsidian:
 
 ```powershell
-git clone <your-github-repo-url>
+.\scripts\publish-to-blog.ps1
 ```
 
-4. Open the cloned folder as an Obsidian vault.
-5. Install and enable the `Obsidian Git` plugin.
-6. Run:
-
-```powershell
-npm install
-```
-
-Use `npm run dev` only if you want local preview.
-
-## Local preview
-
-```powershell
-npm run dev
-```
-
-Open:
-
-```text
-http://127.0.0.1:4321/
-```
-
-## Manual build check
+`npm run build` also runs the publish step automatically:
 
 ```powershell
 npm run build
 ```
 
-Run this before major changes to check that Cloudflare will be able to build.
+One-command publish flow:
 
-## Important rules
+```powershell
+.\scripts\deploy.ps1
+```
 
-- Do not commit `node_modules`, `dist`, or `.astro`.
-- Do not put private notes into `src/content/blog`.
-- Do not edit the same post on two devices at the same time.
-- If Git reports a conflict, resolve it before writing more.
-- The old vault `D:\2026\FE-agent-` is only a reference library now.
+`deploy.ps1` builds the site, commits source changes, and pushes. Generated files under `src\content\blog-zh` are ignored by Git because the source of truth is `obsidian\posts`.
+
+## GitHub and Cloudflare
+
+Create a GitHub repository, then run:
+
+```powershell
+git remote add origin <your-github-repo-url>
+git push -u origin main
+```
+
+Cloudflare Pages should use:
+
+- Build command: `npm run build`
+- Output directory: `dist`
+- Node version: `22`
+
+## Multi-device Obsidian sync
+
+On a new device:
+
+1. Install Git and Obsidian.
+2. Clone the GitHub repository.
+3. Open the cloned `obsidian` folder as the vault.
+4. Install and enable `Obsidian Git`.
+5. Run `npm install` only if you need local preview or build.
+
+Obsidian syncs through the same parent repository. You do not open the Astro project root as the vault.
+
+## Rules
+
+- Open `D:\blog\obsidian` in Obsidian, not `D:\blog`.
+- Do not edit generated files in `src\content\blog-zh` by hand.
+- Edit source posts in `obsidian\posts`.
+- Put non-public synced notes in `obsidian\notes`.
+- Put non-synced private notes in `obsidian\private`.
+- Avoid editing the same post on two devices at the same time.
+- The old vault `D:\2026\FE-agent-` is only a reference library.

@@ -1,6 +1,26 @@
 # Zero Cost Blog
 
-An Astro 5 blog scaffold inspired by https://jilei.blog/zh/blog/zero-cost-blog-setup/.
+Astro 5 blog project with an embedded Obsidian writing vault.
+
+## Structure
+
+```text
+D:\blog
+  obsidian\              # Open this folder as the Obsidian vault
+    .obsidian\
+    _templates\
+    posts\               # Blog source drafts and posts
+    notes\               # Personal notes, synced by Git but not published
+    assets\              # Source images for posts
+  src\content\
+    blog-zh\             # Generated Chinese blog content
+  scripts\
+    publish-to-blog.ps1
+    publish-to-blog.mjs
+    deploy.ps1
+```
+
+There is one Git repository at `D:\blog\.git`. Obsidian Git operates on the parent repository from inside the `obsidian` vault.
 
 ## Commands
 
@@ -10,53 +30,26 @@ npm run dev
 npm run build
 ```
 
-## Obsidian workflow
+Publish Obsidian posts into Astro content:
 
-Open this repository folder (`D:\blog`) as an Obsidian vault. Blog posts live directly in:
-
-```text
-src/content/blog
+```powershell
+.\scripts\publish-to-blog.ps1
 ```
 
-Create a post from the Obsidian template at `.obsidian/templates/blog-post.md`, then change `draft` to `false` when it is ready to publish.
+`npm run build` runs the publish step automatically before Astro builds.
 
-Images and pasted attachments should go in:
+Build, commit, and push local source changes:
 
-```text
-src/content/blog/assets
+```powershell
+.\scripts\deploy.ps1
 ```
-
-Use Markdown image links, for example:
-
-```md
-![Screenshot](assets/screenshot.png)
-```
-
-This keeps images portable across devices and lets Astro process them during the build.
-
-## Git and deploy
-
-This folder is both the Obsidian vault and the Astro blog repository.
-
-- Obsidian Git commits and pushes writing changes from this same repository.
-- GitHub receives those commits.
-- Cloudflare Pages builds this repository with `npm run build`.
-- Build output is `dist`.
-
-There is no second sync step and no dependency on the old vault path.
-
-Ignored local/generated paths include `node_modules`, `dist`, `.astro`, volatile Obsidian workspace files, and local plugin runtime files.
-
-## Routes
-
-The current route shape is:
-
-- `/`
-- `/zh/blog/`
-- `/zh/blog/:slug/`
-- `/about/`
 
 ## Cloudflare Pages
 
 - Build command: `npm run build`
 - Output directory: `dist`
+- Node version: `22`
+
+Cloudflare runs `npm run build`, which generates `src/content/blog-zh` from `obsidian/posts` before Astro builds. It does not need the Obsidian app.
+
+English posts and public notes can be added later by creating new generated content folders and registering matching Astro content collections.

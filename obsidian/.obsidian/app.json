@@ -1,0 +1,8 @@
+{
+  "attachmentFolderPath": "assets",
+  "newFileLocation": "folder",
+  "newFileFolderPath": "posts",
+  "alwaysUpdateLinks": true,
+  "useMarkdownLinks": true,
+  "userIgnoreFilters": []
+}

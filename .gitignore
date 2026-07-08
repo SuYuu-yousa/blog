@@ -11,14 +11,22 @@ dist/
 !.env.example
 
 # Obsidian volatile workspace state
-.obsidian/workspace.json
-.obsidian/workspace-mobile.json
+obsidian/.obsidian/workspace.json
+obsidian/.obsidian/workspace-mobile.json
 
 # Obsidian plugin runtime files are local installs.
-.obsidian/plugins/*/main.js
-.obsidian/plugins/*/styles.css
-.obsidian/plugins/*/manifest.json
-.obsidian/plugins/*/obsidian_askpass.sh
+obsidian/.obsidian/plugins/*/main.js
+obsidian/.obsidian/plugins/*/styles.css
+obsidian/.obsidian/plugins/*/manifest.json
+obsidian/.obsidian/plugins/*/obsidian_askpass.sh
+
+# Local private notes that should not sync or publish.
+obsidian/private/
+
+# Generated publishing targets. Source of truth is obsidian/posts.
+src/content/blog-zh/*.md
+src/content/blog-zh/assets/*
+!src/content/blog-zh/assets/.gitkeep
 
 # OS/editor noise
 .DS_Store

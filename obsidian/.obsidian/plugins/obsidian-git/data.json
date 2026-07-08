@@ -1,6 +1,6 @@
 {
-  "commitMessage": "blog publish: {{date}}",
-  "autoCommitMessage": "blog publish: {{date}}",
+  "commitMessage": "vault sync: {{date}}",
+  "autoCommitMessage": "vault sync: {{date}}",
   "commitMessageScript": "",
   "commitDateFormat": "YYYY-MM-DD HH:mm:ss",
   "autoSaveInterval": 5,
@@ -22,7 +22,7 @@
   "autoBackupAfterFileChange": true,
   "treeStructure": false,
   "refreshSourceControl": true,
-  "basePath": "",
+  "basePath": "..",
   "differentIntervalCommitAndPush": true,
   "changedFilesInStatusBar": false,
   "showedMobileNotice": true,

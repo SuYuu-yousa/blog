@@ -2,7 +2,7 @@
 import { getCollection } from 'astro:content';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 
-const posts = (await getCollection('blog'))
+const posts = (await getCollection('blog-zh'))
   .filter((post) => !post.data.draft && post.data.lang === 'zh')
   .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
   .slice(0, 3);
