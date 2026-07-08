@@ -1,0 +1,31 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+
+const posts = (await getCollection('blog'))
+  .filter((post) => !post.data.draft && post.data.lang === 'zh')
+  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+---
+
+<BaseLayout title="文章 | D:\blog" description="博客文章列表。">
+  <section>
+    <h1 class="text-4xl font-bold">文章</h1>
+    <p class="mt-3 max-w-2xl text-[var(--muted)]">所有中文文章都会从 Markdown 内容集合自动生成。</p>
+    <div class="mt-8 grid gap-4">
+      {
+        posts.map((post) => (
+          <a class="block rounded-md border border-[var(--line)] p-5 no-underline transition hover:border-[var(--accent)]" href={`/zh/blog/${post.slug}/`}>
+            <div class="flex flex-wrap items-center gap-3 text-sm text-[var(--muted)]">
+              <time datetime={post.data.pubDate.toISOString()}>
+                {post.data.pubDate.toLocaleDateString('zh-CN')}
+              </time>
+              {post.data.tags.map((tag) => <span>#{tag}</span>)}
+            </div>
+            <h2 class="mt-2 text-2xl font-semibold">{post.data.title}</h2>
+            <p class="mt-2 text-[var(--muted)]">{post.data.description}</p>
+          </a>
+        ))
+      }
+    </div>
+  </section>
+</BaseLayout>

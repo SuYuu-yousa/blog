@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Astro output and generated state
+dist/
+.astro/
+
+# Environment and local-only config
+.env
+.env.*
+!.env.example
+
+# Obsidian volatile workspace state
+.obsidian/workspace.json
+.obsidian/workspace-mobile.json
+
+# Obsidian plugin runtime files are local installs.
+.obsidian/plugins/*/main.js
+.obsidian/plugins/*/styles.css
+.obsidian/plugins/*/manifest.json
+.obsidian/plugins/*/obsidian_askpass.sh
+
+# OS/editor noise
+.DS_Store
+Thumbs.db

@@ -1,0 +1,33 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import BaseLayout from './BaseLayout.astro';
+
+interface Props {
+  post: CollectionEntry<'blog'>;
+}
+
+const { post } = Astro.props;
+const { title, description, pubDate, updatedDate, tags } = post.data;
+---
+
+<BaseLayout title={`${title} | D:\\blog`} description={description}>
+  <article class="prose">
+    <a class="text-sm text-[var(--muted)]" href="/zh/blog/">← 返回文章列表</a>
+    <header class="mb-8 mt-4 border-b border-[var(--line)] pb-6">
+      <h1 class="mb-3 text-4xl font-bold">{title}</h1>
+      <p class="text-lg text-[var(--muted)]">{description}</p>
+      <div class="mt-4 flex flex-wrap gap-3 text-sm text-[var(--muted)]">
+        <time datetime={pubDate.toISOString()}>
+          {pubDate.toLocaleDateString('zh-CN')}
+        </time>
+        {
+          updatedDate && (
+            <span>更新于 {updatedDate.toLocaleDateString('zh-CN')}</span>
+          )
+        }
+        {tags.map((tag) => <span>#{tag}</span>)}
+      </div>
+    </header>
+    <slot />
+  </article>
+</BaseLayout>
