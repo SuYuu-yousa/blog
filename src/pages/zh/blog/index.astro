@@ -1,6 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
 import BaseLayout from '@/layouts/BaseLayout.astro';
+import { withBase } from '@/lib/paths';
 
 const posts = (await getCollection('blog-zh'))
   .filter((post) => !post.data.draft && post.data.lang === 'zh')
@@ -14,7 +15,7 @@ const posts = (await getCollection('blog-zh'))
     <div class="mt-8 grid gap-4">
       {
         posts.map((post) => (
-          <a class="block rounded-md border border-[var(--line)] p-5 no-underline transition hover:border-[var(--accent)]" href={`/zh/blog/${post.slug}/`}>
+          <a class="block rounded-md border border-[var(--line)] p-5 no-underline transition hover:border-[var(--accent)]" href={withBase(`zh/blog/${post.slug}/`)}>
             <div class="flex flex-wrap items-center gap-3 text-sm text-[var(--muted)]">
               <time datetime={post.data.pubDate.toISOString()}>
                 {post.data.pubDate.toLocaleDateString('zh-CN')}
