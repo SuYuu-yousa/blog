@@ -20,11 +20,80 @@ function assertWithinRepo(targetPath) {
   }
 }
 
+function isExternalAssetUrl(url) {
+  return /^(?:[a-z][a-z0-9+.-]*:|\/\/|#)/i.test(url);
+}
+
+function encodeAssetFileName(fileName) {
+  return encodeURI(fileName).replace(/[?#]/g, (char) => encodeURIComponent(char));
+}
+
+function normalizeLocalImageUrl(rawUrl) {
+  const trimmed = String(rawUrl).trim();
+  const quoted = trimmed.match(/^(['"])(.*)\1(?:\s+.*)?$/);
+  const url = quoted ? quoted[2].trim() : trimmed.split(/\s+["'].*["']\s*$/)[0].trim();
+
+  if (!url || isExternalAssetUrl(url) || url.startsWith('/')) {
+    return null;
+  }
+
+  const [pathPart, suffix = ''] = url.split(/([?#].*)/, 2);
+  let decodedPath;
+
+  try {
+    decodedPath = decodeURI(pathPart);
+  } catch {
+    decodedPath = pathPart;
+  }
+
+  const fileName = path.basename(decodedPath.replaceAll('\\', '/'));
+  if (!fileName) {
+    return null;
+  }
+
+  return `assets/${encodeAssetFileName(fileName)}${suffix}`;
+}
+
+function rewriteImageLinks(markdown) {
+  const rewriteSegment = (segment) => segment
+    .replace(/!\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (_match, fileName, altText) => {
+      const cleanName = String(fileName).trim();
+      const cleanAlt = String(altText ?? cleanName).trim();
+      return `![${cleanAlt}](assets/${encodeAssetFileName(path.basename(cleanName.replaceAll('\\', '/')))})`;
+    })
+    .replace(/!\[([^\]]*)\]\(([^)\n]+)\)/g, (match, altText, rawUrl) => {
+      const normalized = normalizeLocalImageUrl(rawUrl);
+      return normalized ? `![${altText}](${normalized})` : match;
+    });
+
+  const lines = markdown.split(/(\r?\n)/);
+  let inFence = false;
+  let current = '';
+  let output = '';
+
+  for (const token of lines) {
+    if (token === '\n' || token === '\r\n') {
+      current += token;
+      continue;
+    }
+
+    const fence = token.match(/^\s*(```|~~~)/);
+    if (fence) {
+      output += inFence ? current : rewriteSegment(current);
+      current = token;
+      inFence = !inFence;
+      continue;
+    }
+
+    current += token;
+  }
+
+  output += inFence ? current : rewriteSegment(current);
+  return output;
+}
+
 function convertObsidianEmbeds(markdown) {
-  return markdown.replace(/!\[\[([^\]|]+)(?:\|[^\]]+)?\]\]/g, (_match, fileName) => {
-    const cleanName = String(fileName).trim();
-    return `![${cleanName}](assets/${encodeURI(cleanName)})`;
-  });
+  return rewriteImageLinks(markdown);
 }
 
 function normalizeMarkdown(markdown) {
