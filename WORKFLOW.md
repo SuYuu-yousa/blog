@@ -126,7 +126,7 @@ One-command publish flow:
 
 `deploy.ps1` builds the site, commits source changes, and pushes. Generated files under `src\content\blog-zh` are ignored by Git because the source of truth is `obsidian\posts`.
 
-## GitHub and Cloudflare
+## GitHub Pages
 
 Create a GitHub repository, then run:
 
@@ -135,11 +135,12 @@ git remote add origin <your-github-repo-url>
 git push -u origin main
 ```
 
-Cloudflare Pages should use:
+In GitHub:
 
-- Build command: `npm run build`
-- Output directory: `dist`
-- Node version: `22`
+- Open the repository.
+- Go to Settings -> Pages.
+- Set Build and deployment Source to `GitHub Actions`.
+- Push to `main`, or open Actions and run `Deploy GitHub Pages` manually.
 
 ## Multi-device Obsidian sync
 

@@ -44,12 +44,12 @@ Build, commit, and push local source changes:
 .\scripts\deploy.ps1
 ```
 
-## Cloudflare Pages
+## GitHub Pages
 
-- Build command: `npm run build`
-- Output directory: `dist`
-- Node version: `22`
+- Deployment is handled by `.github/workflows/deploy.yml`.
+- Push to `main` triggers `npm ci`, `npm run build`, and publishes `dist`.
+- In GitHub repository settings, set Pages source to `GitHub Actions`.
 
-Cloudflare runs `npm run build`, which generates `src/content/blog-zh` from `obsidian/posts` before Astro builds. It does not need the Obsidian app.
+GitHub Actions runs `npm run build`, which generates `src/content/blog-zh` from `obsidian/posts` before Astro builds. It does not need the Obsidian app.
 
 English posts and public notes can be added later by creating new generated content folders and registering matching Astro content collections.
