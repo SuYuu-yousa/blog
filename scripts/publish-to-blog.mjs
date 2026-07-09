@@ -26,6 +26,22 @@ function convertObsidianEmbeds(markdown) {
   });
 }
 
+function normalizeMarkdown(markdown) {
+  const withoutBom = markdown.replace(/^\uFEFF/, '');
+  const lines = withoutBom.split(/\r?\n/);
+  const nonEmptyLines = lines.filter((line) => line.trim().length > 0);
+  const minIndent = nonEmptyLines.reduce((currentMin, line) => {
+    const indent = line.match(/^[ \t]*/)?.[0].length ?? 0;
+    return Math.min(currentMin, indent);
+  }, Number.POSITIVE_INFINITY);
+
+  if (!Number.isFinite(minIndent) || minIndent === 0) {
+    return withoutBom;
+  }
+
+  return lines.map((line) => line.slice(minIndent)).join('\n');
+}
+
 async function emptyDirectory(directory) {
   if (!existsSync(directory)) {
     await mkdir(directory, { recursive: true });
@@ -65,7 +81,7 @@ await Promise.all(
       const sourcePath = path.join(sourcePosts, entry.name);
       const targetPath = path.join(targetPosts, entry.name);
       const markdown = await readFile(sourcePath, 'utf8');
-      await writeFile(targetPath, convertObsidianEmbeds(markdown), 'utf8');
+      await writeFile(targetPath, convertObsidianEmbeds(normalizeMarkdown(markdown)), 'utf8');
     }),
 );
 
