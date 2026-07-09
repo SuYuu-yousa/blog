@@ -57,20 +57,29 @@ That folder is ignored by Git.
 
 ## Frontmatter
 
-Every publishable post should have:
+Frontmatter is optional. A plain Markdown note can be published:
+
+```md
+# Post title
+
+Body content.
+```
+
+The publish script will infer the title from the first `#` heading, or from the file name if there is no heading.
+
+Optional fields are only needed when you want control:
 
 ```md
 ---
-title: "Post title"
-description: "Short summary"
-pubDate: 2026-07-09
-lang: zh
-tags: []
-draft: false
+title: Custom title
+slug: custom-url
+draft: true
 ---
+
+Body content.
 ```
 
-Use `draft: true` while writing. Drafts can sync to Git, but the site does not publish them.
+If `slug` is missing, the script creates a stable route like `note-440a23cd` from the source file path. Only `draft: true` prevents publishing.
 
 ## Images
 

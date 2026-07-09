@@ -38,6 +38,8 @@ Publish Obsidian posts into Astro content:
 
 `npm run build` runs the publish step automatically before Astro builds.
 
+Posts in `obsidian\posts` can be plain Markdown without frontmatter. The publish script infers a title and generates a stable `note-xxxxxxxx` route unless a post defines its own `slug`.
+
 Build, commit, and push local source changes:
 
 ```powershell
