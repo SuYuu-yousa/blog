@@ -190,11 +190,6 @@ function cleanInlineMarkdown(text) {
     .trim();
 }
 
-function extractTitle(body, fallbackTitle) {
-  const heading = body.match(/^#\s+(.+)$/m);
-  return cleanInlineMarkdown(heading?.[1] ?? fallbackTitle).trim() || fallbackTitle;
-}
-
 function extractDescription(body) {
   const paragraph = body
     .split(/\n\s*\n/)
@@ -268,7 +263,7 @@ async function buildPublishedPost(entry, index) {
   }
 
   const fileTitle = path.basename(entry.name, path.extname(entry.name));
-  const title = data.title ? String(data.title) : extractTitle(body, fileTitle);
+  const title = data.title ? String(data.title) : fileTitle;
   const description = data.description ? String(data.description) : extractDescription(body);
 
   return {

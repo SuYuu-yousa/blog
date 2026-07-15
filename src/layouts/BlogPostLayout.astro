@@ -1,6 +1,5 @@
 ---
 import type { CollectionEntry } from 'astro:content';
-import { withBase } from '@/lib/paths';
 import BaseLayout from './BaseLayout.astro';
 
 interface Props {
@@ -11,10 +10,9 @@ const { post } = Astro.props;
 const { title, description } = post.data;
 ---
 
-<BaseLayout title={`${title} | D:\\blog`} description={description || title}>
+<BaseLayout title={`${title} | D:\blog`} description={description || title}>
   <article class="prose">
-    <a class="text-sm text-[var(--muted)]" href={withBase('zh/blog/')}>返回文章列表</a>
-    <header class="mb-8 mt-4 border-b border-[var(--line)] pb-6">
+    <header class="mb-8 border-b border-[var(--line)] pb-6">
       <h1 class="mb-3 text-4xl font-bold">{title}</h1>
       {description && <p class="text-lg text-[var(--muted)]">{description}</p>}
     </header>
