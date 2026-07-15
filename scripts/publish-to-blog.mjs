@@ -11,6 +11,10 @@ const sourcePosts = path.join(repoRoot, 'obsidian', 'posts');
 const sourceAssets = path.join(repoRoot, 'obsidian', 'assets');
 const targetPosts = path.join(repoRoot, 'src', 'content', 'blog-zh');
 const targetAssets = path.join(targetPosts, 'assets');
+const postSections = [
+  { sourceDir: 'agent', routeDir: 'agent' },
+  { sourceDir: '\u524d\u7aef', routeDir: 'frontend' },
+];
 
 function assertWithinRepo(targetPath) {
   const fullPath = path.resolve(targetPath);
@@ -28,7 +32,7 @@ function encodeAssetFileName(fileName) {
   return encodeURI(fileName).replace(/[?#]/g, (char) => encodeURIComponent(char));
 }
 
-function normalizeLocalImageUrl(rawUrl) {
+function normalizeLocalImageUrl(rawUrl, assetBasePath) {
   const trimmed = String(rawUrl).trim();
   const quoted = trimmed.match(/^(['"])(.*)\1(?:\s+.*)?$/);
   const url = quoted ? quoted[2].trim() : trimmed.split(/\s+["'].*["']\s*$/)[0].trim();
@@ -51,18 +55,18 @@ function normalizeLocalImageUrl(rawUrl) {
     return null;
   }
 
-  return `assets/${encodeAssetFileName(fileName)}${suffix}`;
+  return `${assetBasePath}/${encodeAssetFileName(fileName)}${suffix}`;
 }
 
-function rewriteImageLinks(markdown) {
+function rewriteImageLinks(markdown, assetBasePath) {
   const rewriteSegment = (segment) => segment
     .replace(/!\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (_match, fileName, altText) => {
       const cleanName = String(fileName).trim();
       const cleanAlt = String(altText ?? cleanName).trim();
-      return `![${cleanAlt}](assets/${encodeAssetFileName(path.basename(cleanName.replaceAll('\\', '/')))})`;
+      return `![${cleanAlt}](${assetBasePath}/${encodeAssetFileName(path.basename(cleanName.replaceAll('\\', '/')))})`;
     })
     .replace(/!\[([^\]]*)\]\(([^)\n]+)\)/g, (match, altText, rawUrl) => {
-      const normalized = normalizeLocalImageUrl(rawUrl);
+      const normalized = normalizeLocalImageUrl(rawUrl, assetBasePath);
       return normalized ? `![${altText}](${normalized})` : match;
     });
 
@@ -92,8 +96,8 @@ function rewriteImageLinks(markdown) {
   return output;
 }
 
-function convertObsidianEmbeds(markdown) {
-  return rewriteImageLinks(markdown);
+function convertObsidianEmbeds(markdown, assetBasePath) {
+  return rewriteImageLinks(markdown, assetBasePath);
 }
 
 function normalizeMarkdown(markdown) {
@@ -200,18 +204,42 @@ function extractDescription(body) {
   return cleanInlineMarkdown(paragraph ?? '').slice(0, 140);
 }
 
-function createStableSlug(relativePath) {
-  const hash = crypto
-    .createHash('sha1')
-    .update(relativePath.replaceAll(path.sep, '/'))
-    .digest('hex')
-    .slice(0, 8);
-
-  return `note-${hash}`;
-}
-
 function yamlString(value) {
   return JSON.stringify(String(value));
+}
+
+function createRouteId(routeDir, fileName) {
+  return crypto
+    .createHash('sha1')
+    .update(`${routeDir}/${String(fileName).normalize('NFKC').trim().toLowerCase()}`)
+    .digest('hex')
+    .slice(0, 8);
+}
+
+async function getSourcePosts() {
+  const sectionEntries = await Promise.all(
+    postSections.map(async (section) => {
+      const directory = path.join(sourcePosts, section.sourceDir);
+
+      if (!existsSync(directory)) {
+        await mkdir(directory, { recursive: true });
+        return [];
+      }
+
+      const entries = await readdir(directory, { withFileTypes: true });
+      return entries
+        .filter((entry) => entry.isFile() && entry.name.endsWith('.md'))
+        .map((entry) => ({
+          name: entry.name,
+          sourcePath: path.join(directory, entry.name),
+          routeDir: section.routeDir,
+        }));
+    }),
+  );
+
+  return sectionEntries
+    .flat()
+    .sort((a, b) => `${a.routeDir}/${a.name}`.localeCompare(`${b.routeDir}/${b.name}`, 'zh-CN'));
 }
 
 async function emptyDirectory(directory) {
@@ -229,10 +257,10 @@ async function emptyDirectory(directory) {
 }
 
 async function buildPublishedPost(entry, index) {
-  const sourcePath = path.join(sourcePosts, entry.name);
-  const relativePath = path.relative(sourcePosts, sourcePath);
-  const markdown = normalizeMarkdown(await readFile(sourcePath, 'utf8'));
-  const converted = convertObsidianEmbeds(markdown);
+  const id = createRouteId(entry.routeDir, entry.name);
+  const markdown = normalizeMarkdown(await readFile(entry.sourcePath, 'utf8'));
+  const assetBasePath = '../assets';
+  const converted = convertObsidianEmbeds(markdown, assetBasePath);
   const { data, body } = splitFrontmatter(converted);
 
   if (data.draft === true) {
@@ -242,15 +270,13 @@ async function buildPublishedPost(entry, index) {
   const fileTitle = path.basename(entry.name, path.extname(entry.name));
   const title = data.title ? String(data.title) : extractTitle(body, fileTitle);
   const description = data.description ? String(data.description) : extractDescription(body);
-  const slug = data.slug ? String(data.slug) : createStableSlug(relativePath);
 
   return {
-    fileName: `${slug}.md`,
+    fileName: path.join(entry.routeDir, `${id}.md`),
     content: [
       '---',
       `title: ${yamlString(title)}`,
       `description: ${yamlString(description)}`,
-      `slug: ${yamlString(slug)}`,
       `order: ${index}`,
       '---',
       '',
@@ -270,24 +296,22 @@ await mkdir(targetAssets, { recursive: true });
 const targetEntries = await readdir(targetPosts, { withFileTypes: true });
 await Promise.all(
   targetEntries
-    .filter((entry) => entry.isFile() && entry.name.endsWith('.md'))
-    .map((entry) => rm(path.join(targetPosts, entry.name), { force: true })),
+    .filter((entry) => entry.name !== '.gitkeep' && entry.name !== 'assets')
+    .map((entry) => rm(path.join(targetPosts, entry.name), { recursive: true, force: true })),
 );
 
 await emptyDirectory(targetAssets);
 
-const posts = await readdir(sourcePosts, { withFileTypes: true });
+const posts = await getSourcePosts();
 const publishedPosts = await Promise.all(
   posts
-    .filter((entry) => entry.isFile() && entry.name.endsWith('.md'))
-    .sort((a, b) => a.name.localeCompare(b.name, 'zh-CN'))
     .map((entry, index) => buildPublishedPost(entry, index)),
 );
 
 await Promise.all(
   publishedPosts.filter(Boolean).map((post) => {
     const targetPath = path.join(targetPosts, post.fileName);
-    return writeFile(targetPath, post.content, 'utf8');
+    return mkdir(path.dirname(targetPath), { recursive: true }).then(() => writeFile(targetPath, post.content, 'utf8'));
   }),
 );
 

@@ -24,7 +24,7 @@ obsidian/.obsidian/plugins/*/obsidian_askpass.sh
 obsidian/private/
 
 # Generated publishing targets. Source of truth is obsidian/posts.
-src/content/blog-zh/*.md
+src/content/blog-zh/**/*.md
 src/content/blog-zh/assets/*
 !src/content/blog-zh/assets/.gitkeep
 
